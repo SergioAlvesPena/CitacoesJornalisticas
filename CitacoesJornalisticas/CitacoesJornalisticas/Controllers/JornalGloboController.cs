@@ -2,7 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
+using HtmlAgilityPack;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -12,36 +16,27 @@ namespace CitacoesJornalisticas.Controllers
     [ApiController]
     public class JornalGloboController : ControllerBase
     {
-        // GET: api/<JornalGloboController>
-        [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
+        string DNS = "https://g1.globo.com/";
+        string busca = "busca/";
+        string queryKey = "?q={nome}";
 
         // GET api/<JornalGloboController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
+        [HttpGet]
+        [Route("busca")]
+        public HtmlNode Get()
         {
-            return "value";
-        }
+            var requisicaoWeb = WebRequest.CreateHttp("https://g1.globo.com/busca/?q=jair+messias+bolsonaro&page=1");
+            requisicaoWeb.Method = "GET";
+            requisicaoWeb.UserAgent = "RequisicaoWebDemo";
 
-        // POST api/<JornalGloboController>
-        [HttpPost]
-        public void Post([FromBody] string value)
-        {
-        }
-
-        // PUT api/<JornalGloboController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE api/<JornalGloboController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
+            var a =  requisicaoWeb.GetResponse();
+            var streamDados = a.GetResponseStream();
+            StreamReader reader = new StreamReader(streamDados);
+            string objResponse = reader.ReadToEnd();
+            var doc = new HtmlDocument();
+            doc.LoadHtml(objResponse);
+            HtmlNode citacoes = doc.GetElementbyId("content");
+            return citacoes;
         }
     }
 }

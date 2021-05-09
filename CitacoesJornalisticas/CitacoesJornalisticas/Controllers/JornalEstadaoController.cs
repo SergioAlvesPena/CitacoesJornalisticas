@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -12,11 +13,19 @@ namespace CitacoesJornalisticas.Controllers
     [ApiController]
     public class JornalEstadaoController : ControllerBase
     {
+        string DNS = "https://g1.globo.com/";
+        string busca = "busca";
+        string queryKey = "";
+
         // GET: api/<JornalEstadaoController>
         [HttpGet]
-        public IEnumerable<string> Get()
+        public ContentResult Get()
         {
-            return new string[] { "value1", "value2" };
+            string result = "";
+            HttpClient client = new HttpClient();
+
+
+            return base.Content(result);
         }
 
         // GET api/<JornalEstadaoController>/5
