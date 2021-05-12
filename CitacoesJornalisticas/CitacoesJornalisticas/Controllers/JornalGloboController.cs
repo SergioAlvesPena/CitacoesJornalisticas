@@ -7,6 +7,8 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
+using System.Text;
+using System.Text.RegularExpressions;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -20,23 +22,42 @@ namespace CitacoesJornalisticas.Controllers
         string busca = "busca/";
         string queryKey = "?q={nome}";
 
-        // GET api/<JornalGloboController>/5
+        /// <summary>
+        /// search by name on G1 and return the 10 most recent news
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [Route("busca")]
         public HtmlNode Get()
         {
-            var requisicaoWeb = WebRequest.CreateHttp("https://g1.globo.com/busca/?q=jair+messias+bolsonaro&page=1");
-            requisicaoWeb.Method = "GET";
-            requisicaoWeb.UserAgent = "RequisicaoWebDemo";
+            var WebRequisition = WebRequest.CreateHttp("https://g1.globo.com/busca/?q=jair+messias+bolsonaro&page=1");
+            WebRequisition.Method = "GET";
+            WebRequisition.UserAgent = "RequisicaoWebDemo";
 
-            var a =  requisicaoWeb.GetResponse();
-            var streamDados = a.GetResponseStream();
+            WebResponse requisitionAnswer =  WebRequisition.GetResponse();
+            Stream streamDados = requisitionAnswer.GetResponseStream();
             StreamReader reader = new StreamReader(streamDados);
             string objResponse = reader.ReadToEnd();
-            var doc = new HtmlDocument();
+            HtmlDocument doc = new HtmlDocument();
             doc.LoadHtml(objResponse);
-            HtmlNode citacoes = doc.GetElementbyId("content");
-            return citacoes;
+            HtmlNode quotes = doc.GetElementbyId("content");
+            string ListOfPosts = quotes.OuterHtml.Replace(@"\n", "breakalinehere");
+            ListOfPosts = ListOfPosts.Replace(@"\","");
+            System.IO.File.WriteAllText(@"C:\Users\Sergio Pena\Desktop\Unip\TCC\SergioPena\CitacoesJornalisticas\CitacoesJornalisticas\CitacoesJornalisticas\FileAccess\result.cshtml", ListOfPosts, Encoding.UTF8);
+            int i = 0;
+
+            Regex ListItemPattern = new Regex("(<li (class=\"widget widget--card widget--navigational\") (data-position=\"([0-9])\")>)+");
+            List<string> itens = new List<string>();
+            itens.AddRange(ListOfPosts.Split(" "));
+
+            while (ListOfPosts.Contains("data-position=\"" + i + "\""))
+            {
+                bool contains = ListItemPattern.IsMatch(ListOfPosts);
+                i++;
+                //ListOfPosts.Substring();
+            }
+
+            return quotes;
         }
     }
 }
