@@ -9,6 +9,7 @@ using HtmlAgilityPack;
 using System.Text;
 using System.Text.RegularExpressions;
 using CitacoesJornalisticas.Controllers;
+using Newtonsoft.Json;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -23,18 +24,19 @@ namespace CitacoesJornalisticas.Controllers
         string queryKey = "?q={nome}";
 
         /// <summary>
-        /// search by name on G1 and return the 10 most recent news
+        ///     search by name on G1 and return the 10 most recent news
         /// </summary>
         /// <returns></returns>
         [HttpGet]
         [Route("busca")]
-        public HtmlNode Get()
+        public string Get()
         {
-            var WebRequisition = WebRequest.CreateHttp("https://g1.globo.com/busca/?q=jair+messias+bolsonaro&page=1");
+            //requisition step insn't perfect
+            var WebRequisition = WebRequest.CreateHttp("https://g1.globo.com/busca/?q=fernando+haddad&page=1");
             WebRequisition.Method = "GET";
             WebRequisition.UserAgent = "RequisicaoWebDemo";
-            List<string> bora = new List<string>();
 
+            //encapsulate the response of request
             WebResponse requisitionAnswer = WebRequisition.GetResponse();
             Stream streamDados = requisitionAnswer.GetResponseStream();
             StreamReader reader = new StreamReader(streamDados);
@@ -42,36 +44,14 @@ namespace CitacoesJornalisticas.Controllers
             HtmlDocument doc = new HtmlDocument();
             doc.LoadHtml(objResponse);
             HtmlNode quotes = doc.GetElementbyId("content");
-            string ListOfPosts = quotes.OuterHtml.Replace(@"\n", "breakalinehere");
-            ListOfPosts = ListOfPosts.Replace(@"\", "");
-            System.IO.File.WriteAllText(@"C:\Users\Sergio Pena\Desktop\Unip\TCC\SergioPena\CitacoesJornalisticas\CitacoesJornalisticas\CitacoesJornalisticas\FileAccess\result.cshtml", ListOfPosts, Encoding.UTF8);
-            int i = 0;
 
-            Regex ListItemPattern = new Regex("(<li (class=\"widget widget--card widget--navigational\") (data-position=\"([0-9])\")>)+");
-            List<string> itens = new List<string>();
-            itens.AddRange(ListOfPosts.Split(@"href="));
-
-            
-            foreach (string link in itens)
-            {
-                int inicio = 0;
-                int final = 0;
-                if (link.Contains("g1.globo.com/busca"))
-                {
-                    inicio = link.IndexOf("g1");
-                    final = link.IndexOf("\">");
-                    bora.Add(link.Substring(inicio, final));
-                }
-            }
-
-            while (ListOfPosts.Contains("data-position=\"" + i + "\""))
-            {
-                bool contains = ListItemPattern.IsMatch(ListOfPosts);
-                i++;
-                //ListOfPosts.Substring();
-            }
-
-            return quotes;
+            //get the links
+            List<string> links = new List<string>();
+            GloboHelper gh = new GloboHelper();
+            links.AddRange(gh.GetLinks(quotes.OuterHtml));
+            string json = JsonConvert.SerializeObject(links, Formatting.Indented);
+            System.IO.File.WriteAllText(@"C:\Users\Sergio Pena\Desktop\Unip\TCC\SergioPena\CitacoesJornalisticas\CitacoesJornalisticas\CitacoesJornalisticas\FileAccess\JsonLinks.json", json, Encoding.UTF8);
+            return json;
         }
     }
 }
