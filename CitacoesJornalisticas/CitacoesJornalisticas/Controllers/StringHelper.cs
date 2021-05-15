@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace CitacoesJornalisticas.Controllers
 {
     public static class StringHelper
@@ -47,20 +45,22 @@ namespace CitacoesJornalisticas.Controllers
 
             itens = itens.Replace(@"\n", "breakalinehere");
             itens = itens.Replace(@"\", "");
-
             ListOfItens.AddRange(itens.Split(@"href="));
+
             foreach (string link in ListOfItens)
             {
                 int inicio = 0;
                 int final = 0;
+                string url = "";
                 if (link.Contains("g1.globo.com/busca"))
                 {
                     inicio = link.IndexOf("g1");
                     final = link.IndexOf("\">");
-                    result.Add(link.Substring(inicio, final).DeleteUntil());
+                    url = link.Substring(inicio, final).DeleteUntil();
+
+                    if (!result.Contains(url)) result.Add(url);
                 }
             }
-
             return result;
         }
     }

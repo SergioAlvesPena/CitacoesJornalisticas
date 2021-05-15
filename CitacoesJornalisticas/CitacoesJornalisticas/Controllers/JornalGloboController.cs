@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using CitacoesJornalisticas.Controllers;
 using Newtonsoft.Json;
+using CitacoesJornalisticas.Helpers;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -19,10 +20,6 @@ namespace CitacoesJornalisticas.Controllers
     [ApiController]
     public class JornalGloboController : ControllerBase
     {
-        string DNS = "https://g1.globo.com/";
-        string busca = "busca/";
-        string queryKey = "?q={nome}";
-
         /// <summary>
         ///     search by name on G1 and return the 10 most recent news
         /// </summary>
@@ -31,13 +28,18 @@ namespace CitacoesJornalisticas.Controllers
         [Route("busca")]
         public string Get()
         {
-            //requisition step insn't perfect
-            var WebRequisition = WebRequest.CreateHttp("https://g1.globo.com/busca/?q=fernando+haddad&page=1");
-            WebRequisition.Method = "GET";
-            WebRequisition.UserAgent = "RequisicaoWebDemo";
+            #region .:Request:.
 
-            //encapsulate the response of request
-            WebResponse requisitionAnswer = WebRequisition.GetResponse();
+            RequestHelpers rh = new RequestHelpers();
+            HttpWebRequest WebReq = WebRequest.CreateHttp(rh.GloboFormatRequest("Jair Messias Bolsonaro"));
+            WebReq.Method = "GET";
+            WebReq.UserAgent = "RequisicaoWebDemo";
+
+            #endregion
+
+            #region .:Encapsulate Request Response:.
+
+            WebResponse requisitionAnswer = WebReq.GetResponse();
             Stream streamDados = requisitionAnswer.GetResponseStream();
             StreamReader reader = new StreamReader(streamDados);
             string objResponse = reader.ReadToEnd();
@@ -45,13 +47,18 @@ namespace CitacoesJornalisticas.Controllers
             doc.LoadHtml(objResponse);
             HtmlNode quotes = doc.GetElementbyId("content");
 
-            //get the links
+            #endregion
+
+            #region .:Generate Links:.
+
             List<string> links = new List<string>();
             GloboHelper gh = new GloboHelper();
             links.AddRange(gh.GetLinks(quotes.OuterHtml));
             string json = JsonConvert.SerializeObject(links, Formatting.Indented);
             System.IO.File.WriteAllText(@"C:\Users\Sergio Pena\Desktop\Unip\TCC\SergioPena\CitacoesJornalisticas\CitacoesJornalisticas\CitacoesJornalisticas\FileAccess\JsonLinks.json", json, Encoding.UTF8);
             return json;
+
+            #endregion
         }
     }
 }
