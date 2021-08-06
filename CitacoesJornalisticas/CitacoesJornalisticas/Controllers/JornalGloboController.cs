@@ -16,49 +16,31 @@ using CitacoesJornalisticas.Helpers;
 
 namespace CitacoesJornalisticas.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class JornalGloboController : ControllerBase
     {
-        /// <summary>
-        ///     search by name on G1 and return the 10 most recent news
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet]
-        [Route("busca")]
-        public string Get()
+        private readonly HttpClient _httpClient;
+
+        public JornalGloboController(HttpClient httpClient)
         {
-            #region .:Request:.
+            _httpClient = httpClient;
+        }
 
-            RequestHelpers rh = new RequestHelpers();
-            HttpWebRequest WebReq = WebRequest.CreateHttp(rh.GloboFormatRequest("Jair Messias Bolsonaro"));
-            WebReq.Method = "GET";
-            WebReq.UserAgent = "RequisicaoWebDemo";
-
-            #endregion
-
-            #region .:Encapsulate Request Response:.
-
-            WebResponse requisitionAnswer = WebReq.GetResponse();
-            Stream streamDados = requisitionAnswer.GetResponseStream();
-            StreamReader reader = new StreamReader(streamDados);
-            string objResponse = reader.ReadToEnd();
-            HtmlDocument doc = new HtmlDocument();
-            doc.LoadHtml(objResponse);
-            HtmlNode quotes = doc.GetElementbyId("content");
-
-            #endregion
-
-            #region .:Generate Links:.
-
-            List<string> links = new List<string>();
+        [HttpGet]
+        [Route("GetNews")]
+        public async Task<string> GetNews(string name)
+        {
+            RequestHelpers _requestHelpers = new RequestHelpers();
             GloboHelper gh = new GloboHelper();
-            links.AddRange(gh.GetLinks(quotes.OuterHtml));
+
+            var response = await _httpClient.GetAsync(_requestHelpers.GloboFormatRequest(name));
+            List<string> links = new List<string>();
+            links.AddRange(gh.GetLinks(response.Content.ReadAsStringAsync().Result));
             string json = JsonConvert.SerializeObject(links, Formatting.Indented);
-            System.IO.File.WriteAllText(@"C:\Users\Sergio Pena\Desktop\Unip\TCC\SergioPena\CitacoesJornalisticas\CitacoesJornalisticas\CitacoesJornalisticas\FileAccess\JsonLinks.json", json, Encoding.UTF8);
+            System.IO.File.WriteAllText(@"C:\Users\Sergio Pena\Desktop\Unip\TCC\SergioPena\CitacoesJornalisticas\CitacoesJornalisticas\CitacoesJornalisticas\FileAccess\GloboResults.json", json, Encoding.UTF8);
             return json;
 
-            #endregion
         }
     }
 }
